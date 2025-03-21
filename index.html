@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality SVM Project</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <img src="assets/logo.png" alt="Logo" class="logo-img"> <!-- Optional -->
+                <h1>Air Quality SVM Project</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#why">Why</a></li>
+                    <li><a href="#data">Data</a></li>
+                    <li><a href="#how">How</a></li>
+                    <li><a href="#code">Code</a></li>
+                    <li><a href="#results">Results</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section id="why" class="beautiful-section">
+            <div class="content">
+                <h2>Why I Built This Project</h2>
+                <p>The inspiration for this project stemmed from a deep concern about air pollution, a pressing issue that affects millions globally, particularly in urban centers like Delhi, India. Air quality impacts health, climate, and quality of life, yet it’s often invisible until it’s critical. I wanted to leverage machine learning to not only understand this problem but also make it tangible and actionable. By building a predictive model, my goal was to classify air quality as "Good" or "Bad" based on pollutant levels, offering a tool that could raise awareness and potentially inform policy or personal decisions. This wasn’t just an academic exercise—it was a chance to blend data science with real-world impact, exploring a dataset that’s both unique and meaningful. I chose this path because I believe technology can illuminate hidden challenges and inspire change, one prediction at a time.</p>
+            </div>
+        </section>
+
+        <section id="data" class="beautiful-section">
+            <div class="content">
+                <h2>Where I Got the Data</h2>
+                <p>The foundation of this project is the <a href="https://www.kaggle.com/datasets/rohanrao/air-quality-data-in-india" target="_blank">Air Quality Data in India (2015-2020)</a> dataset from Kaggle, a treasure trove of environmental data collected from air quality monitoring stations across India, with a focus on Delhi. This dataset spans five years and includes daily measurements of key pollutants: PM2.5 (fine particulate matter), PM10 (coarser particles), NO2 (nitrogen dioxide), CO (carbon monoxide), and more, alongside an Air Quality Index (AQI). I chose this dataset because it’s rich, real-world, and specific—Delhi’s notorious air pollution made it a compelling case study. Downloading it was straightforward: a CSV file (`city_day.csv`) from Kaggle, which I then uploaded to Google Colab for analysis. It’s not your typical classroom dataset like Iris or Titanic, which makes it stand out for a university project—it’s raw, messy, and reflective of an ongoing global challenge.</p>
+            </div>
+        </section>
+
+        <section id="how" class="beautiful-section">
+            <div class="content">
+                <h2>How I Built the Model</h2>
+                <p>Building this SVM model was a multi-step journey, blending data wrangling, machine learning, and evaluation into a cohesive process. First, I tackled preprocessing: the dataset had missing values, so I dropped rows where my key features (PM2.5, PM10, NO2, CO) were incomplete—keeping the data clean but robust. I then defined my target: air quality as "Good" (PM2.5 ≤ 50 µg/m³) or "Bad" (> 50 µg/m³), a threshold inspired by air quality standards. To prepare the features, I applied StandardScaler to normalize them, ensuring the SVM wouldn’t be skewed by differing scales. Next, I split the data into 80% training and 20% testing sets for a fair evaluation. The core of the project was the Support Vector Machine—I used GridSearchCV to tune it, testing C values (0.1, 1, 10) and kernels (linear, rbf) to find the best fit. Finally, I evaluated the model with accuracy scores, a confusion matrix to see true positives and negatives, and feature importance (for the linear kernel) to understand what drives predictions. This process was iterative and hands-on, balancing theory with practical tweaks to make the model sing.</p>
+            </div>
+        </section>
+
+        <section id="code" class="beautiful-section">
+            <div class="content">
+                <h2>The Code Behind the Magic</h2>
+                <p>Below is the Python code I wrote in Google Colab, split into two parts for clarity. The left column handles data loading, preprocessing, and exploration, while the right column covers model training, evaluation, and visualization. It’s the full recipe for my air quality predictions!</p>
+                <div class="code-container">
+                    <div class="code-column">
+                        <h3>Data & Exploration</h3>
+                        <pre><code class="language-python">
+# Cell 1: Import Libraries
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Cell 2: Load the Dataset
+data = pd.read_csv('/content/city_day.csv')
+print("First few rows:")
+print(data.head())
+
+# Cell 3: Preprocess the Data
+data = data.dropna(subset=['PM2.5', 'PM10', 'NO2', 'CO'])
+data['quality'] = data['PM2.5'].apply(lambda x: 1 if x <= 50 else 0)
+X = data[['PM2.5', 'PM10', 'NO2', 'CO']]
+y = data['quality']
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+# Cell 4: Explore Data
+sns.pairplot(data[['PM2.5', 'PM10', 'NO2', 'CO', 'quality']], hue='quality')
+plt.show()
+                        </code></pre>
+                    </div>
+                    <div class="code-column">
+                        <h3>Model & Evaluation</h3>
+                        <pre><code class="language-python">
+# Cell 5: Train and Tune SVM
+from sklearn.model_selection import GridSearchCV
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
+param_grid = {'C': [0.1, 1, 10], 'kernel': ['linear', 'rbf']}
+svm_model = GridSearchCV(SVC(), param_grid, cv=5)
+svm_model.fit(X_train, y_train)
+print("Best parameters:", svm_model.best_params_)
+train_preds = svm_model.predict(X_train)
+print("Training accuracy:", accuracy_score(y_train, train_preds))
+
+# Cell 6: Test and Evaluate
+test_preds = svm_model.predict(X_test)
+print("Testing accuracy:", accuracy_score(y_test, test_preds))
+cm = confusion_matrix(y_test, test_preds)
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['Bad', 'Good'])
+disp.plot(cmap='Blues')
+plt.show()
+
+# Cell 7: Visualize Predictions
+plt.scatter(X_test[:, 0], X_test[:, 2], c=test_preds)
+plt.xlabel('Scaled PM2.5')
+plt.ylabel('Scaled NO2')
+plt.show()
+
+# Cell 8: Feature Importance
+if svm_model.best_params_['kernel'] == 'linear':
+    importance = np.abs(svm_model.best_estimator_.coef_[0])
+    features = ['PM2.5', 'PM10', 'NO2', 'CO']
+    plt.bar(features, importance)
+    plt.xlabel('Features')
+    plt.ylabel('Importance')
+    plt.show()
+                        </code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="results" class="beautiful-section">
+            <div class="content">
+                <h2>My Results and Visualizations</h2>
+                <p>After running the code, my SVM delivered impressive results. Below, I’ve detailed the key findings and included all visualizations, with some plots displayed side by side for a cleaner look. Each element showcases a piece of the analysis puzzle.</p>
+                <div class="result-item">
+                    <h3>Accuracy</h3>
+                    <p>The model achieved a testing accuracy of <strong>99%</strong> (update this with your exact value after running the code). This high accuracy reflects the SVM’s ability to distinguish "Good" (PM2.5 ≤ 50 µg/m³) from "Bad" air days effectively.</p>
+                </div>
+                <div class="result-item">
+                    <h3>Prediction Breakdown</h3>
+                    <canvas id="resultsChart" width="400" height="200"></canvas>
+                    <p>This bar chart shows the count of "Good" vs. "Bad" air days predicted in the test set—replace the dummy data with your actual counts!</p>
+                </div>
+                <div class="result-item image-row">
+                    <div class="image-column">
+                        <h3>Pair Plot</h3>
+                        <img src="assets/pairplot.png" alt="Pair Plot" class="plot-img">
+                        <p>Explores relationships between features, colored by air quality.</p>
+                    </div>
+                    <div class="image-column">
+                        <h3>Confusion Matrix</h3>
+                        <img src="assets/confusion.png" alt="Confusion Matrix" class="plot-img">
+                        <p>Shows true positives, false negatives, etc., for model performance.</p>
+                    </div>
+                </div>
+                <div class="result-item image-row">
+                    <div class="image-column">
+                        <h3>Prediction Scatter</h3>
+                        <img src="assets/scatter.png" alt="Scatter Plot" class="plot-img">
+                        <p>Visualizes predictions using scaled PM2.5 and NO2.</p>
+                    </div>
+                    <div class="image-column">
+                        <h3>Feature Importance</h3>
+                        <img src="assets/featureimp.png" alt="Feature Importance" class="plot-img">
+                        <p>Ranks feature importance for the linear kernel.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Created by [Your Name] | 2025</p>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>
